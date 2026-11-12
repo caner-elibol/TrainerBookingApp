@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: personaltrainer-postgres
+    environment:
+      POSTGRES_DB: personaltrainer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    container_name: personaltrainer-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: src/PersonalTrainer.Api/Dockerfile
+    container_name: personaltrainer-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=personaltrainer;Username=postgres;Password=${POSTGRES_PASSWORD:-devpassword}"
+      ConnectionStrings__Redis: "redis:6379"
+      Jwt__Issuer: "PersonalTrainer.Api"
+      Jwt__Audience: "PersonalTrainer.Clients"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in backend/.env (see .env.example)}"
+      Jwt__AccessTokenMinutes: "15"
+      Jwt__RefreshTokenDays: "30"
+      Google__ClientId: "${GOOGLE_CLIENT_ID:-}"
+      Email__Host: "smtp.gmail.com"
+      Email__Port: "587"
+      Email__UserName: "${GMAIL_USER:-}"
+      Email__Password: "${GMAIL_APP_PASSWORD:-}"
+      Email__FromAddress: "${GMAIL_USER:-}"
+      Email__FromName: "PersonalTrainer"
+      Email__UseFakeSender: "${EMAIL_USE_FAKE_SENDER:-true}"
+      Paytr__MerchantId: "${PAYTR_MERCHANT_ID:-000000}"
+      Paytr__MerchantKey: "${PAYTR_MERCHANT_KEY:-dev_merchant_key}"
+      Paytr__MerchantSalt: "${PAYTR_MERCHANT_SALT:-dev_merchant_salt}"
+      Paytr__TestMode: "true"
+      Paytr__MerchantOkUrl: "http://localhost:3000/payment/success"
+      Paytr__MerchantFailUrl: "http://localhost:3000/payment/failed"
+      Paytr__Currency: "TL"
+      Paytr__UseFakeGateway: "${PAYTR_USE_FAKE_GATEWAY:-true}"
+      Cors__AllowedOrigins__0: "http://localhost:3000"
+    ports:
+      - "5190:8080"
+
+volumes:
+  postgres-data:

@@ -1,0 +1,42 @@
+# .NET
+bin/
+obj/
+.vs/
+*.user
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docs / scripts (README is the only tracked markdown)
+*.md
+!README.md
+*.sh
+
+# Tooling output
+*.log
+.claude/
+.playwright-mcp/
+graphify-out/
+/qa-*.png
+/qa2-*.png
+*.tar.gz
+*.tsbuildinfo
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Env / secrets
+.env
+.env.*
+!.env.example
